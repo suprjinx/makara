@@ -1,4 +1,6 @@
 require 'rack'
+require 'base64'
+require 'yaml'
 
 # Persists the Makara::Context across requests ensuring the same master pool is used on the subsequent request.
 # Simply sets the cookie with the current context and the status code of this request. The next request then sets
@@ -9,6 +11,7 @@ module Makara
   class Middleware
 
     IDENTIFIER = '_mkra_ctxt'
+    CACHE_IDENTIFIER = '_mkra_cache'
 
 
     def initialize(app)
@@ -22,10 +25,12 @@ module Makara
 
       Makara::Context.set_previous previous_context(env)
       Makara::Context.set_current new_context(env)
+      read_cookie_cache(env)
 
       status, headers, body = @app.call(env)
 
       store_context(status, headers)
+      write_cookie_cache(headers)
 
       [status, headers, body]
     end
@@ -105,5 +110,26 @@ module Makara
 
       Rack::Utils.set_cookie_header!(header, IDENTIFIER, cookie_value)
     end
+
+    def read_cookie_cache(env)
+      regex = /#{CACHE_IDENTIFIER}=([\-a-z0-9A-Z]+)/
+      env['HTTP_COOKIE'].to_s =~ regex
+      cache = YAML.load(Base64.decode64($1)) if $1
+      Thread.current[CACHE_IDENTIFIER] = cache || {}
+    end
+
+    def write_cookie_cache(headers)
+      return unless Thread.current[CACHE_IDENTIFIER].present?
+      cookie_value = {
+        :path => '/',
+        :value => Base64.encode64(Thread.current[CACHE_IDENTIFIER].to_yaml),
+        :http_only => true,
+        :max_age => '5'
+      }
+
+      Rack::Utils.set_cookie_header!(headers, CACHE_IDENTIFIER, cookie_value)
+    end
+
+
   end
 end

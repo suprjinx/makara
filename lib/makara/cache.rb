@@ -8,6 +8,7 @@ module Makara
 
     autoload :MemoryStore, 'makara/cache/memory_store'
     autoload :NoopStore,   'makara/cache/noop_store'
+    autoload :CookieStore, 'makara/cache/cookie_store'
 
     class << self
 
@@ -31,6 +32,8 @@ module Makara
           @store = Makara::Cache::NoopStore.new
         when :memory
           @store = Makara::Cache::MemoryStore.new
+        when :cookie
+          @store = Makara::Cache::CookieStore.new
         else
           if defined?(Rails)
 
