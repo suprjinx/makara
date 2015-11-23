@@ -2,6 +2,7 @@ require 'active_record'
 require 'makara'
 require 'timecop'
 require 'yaml'
+require 'pry'
 
 begin
   require 'byebug'
