@@ -14,7 +14,7 @@ module Makara
       private
 
       def cache
-        Thread.current[Makara::Middleware::CACHE_IDENTIFIER] || {}
+        Thread.current[Makara::Middleware::CACHE_IDENTIFIER] ||= {}
       end
 
     end

@@ -22,6 +22,10 @@ describe Makara::Cache do
     described_class.store = :noop
     described_class.write('test', 'value', 10)
     expect(described_class.read('test')).to be_nil
+
+    described_class.store = :cookie
+    described_class.write('test', 'value', 10)
+    expect(described_class.read('test')).to eq('value')
   end
 
 
@@ -52,6 +56,16 @@ describe Makara::Cache do
       expect(data).not_to have_key('test')
     end
 
+  end
+
+  context Makara::Cache::CookieStore do
+    let(:store){ Makara::Cache::CookieStore.new }
+
+    it 'stores the cache in a thread local hash' do
+      store.write('test', 'value', 10)
+      expect(Thread.current[Makara::Middleware::CACHE_IDENTIFIER]).to be_a(Hash)
+      expect(Thread.current[Makara::Middleware::CACHE_IDENTIFIER]['test']).to eq('value')
+    end
   end
 
 
